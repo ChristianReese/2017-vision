@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="it.polito.teaching.cv.VideoController">
+	<center>
+	   <ImageView fx:id="currentFrame" />
+   </center>
+   <right>
+      <VBox alignment="CENTER_LEFT" spacing="10">
+         <padding>
+            <Insets left="10" right="20" />
+         </padding>
+         <children>
+            <ImageView fx:id="histogram" />
+            <Text text="Controls" />
+            <CheckBox fx:id="grayscale" text="Show in gray scale" />
+            <CheckBox fx:id="logoCheckBox" onAction="#loadLogo" text="Show logo" />
+            <CheckBox fx:id="thresholdCheckBox" mnemonicParsing="false" text="Show threshold" />
+         </children>
+      </VBox>
+   </right>
+   <bottom>
+      <HBox alignment="CENTER">
+         <padding>
+            <Insets bottom="25" left="25" right="25" top="25" />
+         </padding>
+         <children>
+            <VBox prefHeight="200.0" prefWidth="100.0">
+               <children>
+                  <Slider fx:id="hueMinSldr" majorTickUnit="60.0" max="180.0" showTickLabels="true" showTickMarks="true" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="hueMinLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue Min:" />
+                        <Text fx:id="hueMinValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="0" wrappingWidth="46.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+                  <Slider fx:id="hueMaxSldr" majorTickUnit="60.0" max="180.0" showTickLabels="true" showTickMarks="true" value="255.0" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="hueMaxLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue Max:" />
+                        <Text fx:id="hueMaxValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="180" wrappingWidth="44.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+               </children>
+               <HBox.margin>
+                  <Insets right="16.0" />
+               </HBox.margin>
+            </VBox>
+            <VBox prefHeight="200.0" prefWidth="100.0">
+               <children>
+                  <Slider fx:id="satMinSldr" majorTickUnit="85.0" max="255.0" showTickLabels="true" showTickMarks="true" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="satMinLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Sat Min:" />
+                        <Text fx:id="satMinValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="0" wrappingWidth="46.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+                  <Slider fx:id="satMaxSldr" majorTickUnit="85.0" max="255.0" showTickLabels="true" showTickMarks="true" value="255.0" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="satMaxLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Sat Max:" />
+                        <Text fx:id="satMaxValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="255" wrappingWidth="46.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+               </children>
+               <HBox.margin>
+                  <Insets right="16.0" />
+               </HBox.margin>
+            </VBox>
+            <VBox prefHeight="200.0" prefWidth="100.0">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+               <children>
+                  <Slider fx:id="lumMinSldr" majorTickUnit="85.0" max="255.0" showTickLabels="true" showTickMarks="true" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="lumMinLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Lum Min:" />
+                        <Text fx:id="lumMinValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="0" wrappingWidth="41.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+                  <Slider fx:id="lumMaxSldr" majorTickUnit="85.0" max="255.0" showTickLabels="true" showTickMarks="true" value="255.0" />
+                  <FlowPane prefHeight="17.0" prefWidth="100.0">
+                     <children>
+                        <Text fx:id="lumMaxLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="Lum Max:" />
+                        <Text fx:id="lumMaxValLbl" strokeType="OUTSIDE" strokeWidth="0.0" text="255" wrappingWidth="43.13671875">
+                           <FlowPane.margin>
+                              <Insets left="4.0" />
+                           </FlowPane.margin>
+                        </Text>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="8.0" />
+                     </VBox.margin>
+                  </FlowPane>
+               </children>
+            </VBox>
+            <Button fx:id="button" alignment="center" onAction="#startCamera" text="Start camera" />
+            <TextField fx:id="cameraNumberInput" prefHeight="25.0" prefWidth="30.0" text="0" />
+         </children>
+      </HBox>
+   </bottom>
+</BorderPane>
