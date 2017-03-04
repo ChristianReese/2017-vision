@@ -1,5 +1,6 @@
 package first.frc.team2077.season2017.vision.trackers;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -73,9 +74,9 @@ public class Polygon implements Iterable< LineSegment >
 		
 	}
 	
-	private ArrayList<Point> points;
+	private List<Point> points;
 	
-	public static Polygon createPolygon( ArrayList<Point> inputPoints )
+	public static Polygon createPolygon( List<Point> inputPoints )
 	{
 		Polygon result = new Polygon();
 		result.points = new ArrayList<>();

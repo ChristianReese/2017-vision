@@ -70,30 +70,30 @@ public class VideoController
 	private ImageView currentFrame;
 
 	@FXML
-	private Slider hueMinSldr;
+	private Slider min1Sldr;
 	@FXML
-	private Slider hueMaxSldr;
+	private Slider max1Sldr;
 	@FXML
-	private Slider satMinSldr;
+	private Slider min2Sldr;
 	@FXML
-	private Slider satMaxSldr;
+	private Slider max2Sldr;
 	@FXML
-	private Slider lumMinSldr;
+	private Slider min3Sldr;
 	@FXML
-	private Slider lumMaxSldr;
+	private Slider max3Sldr;
 
 	@FXML
-	private Text hueMinValLbl;
+	private Text min1ValLbl;
 	@FXML
-	private Text hueMaxValLbl;
+	private Text max1ValLbl;
 	@FXML
-	private Text satMinValLbl;
+	private Text min2ValLbl;
 	@FXML
-	private Text satMaxValLbl;
+	private Text max2ValLbl;
 	@FXML
-	private Text lumMinValLbl;
+	private Text min3ValLbl;
 	@FXML
-	private Text lumMaxValLbl;
+	private Text max3ValLbl;
 	
 	@FXML 
 	private TextField cameraNumberInput;
@@ -133,27 +133,27 @@ public class VideoController
 						{
 							Video.Config configProxy = Video.getInstance().getConfig();
 							
-							if ( ( hueMinValLbl != null ) && ( hueMinSldr != null ) ) 
-								hueMinValLbl.setText( Integer.toString( (int)hueMinSldr.getValue() ) ); 
-							if ( ( hueMaxValLbl != null ) && ( hueMaxSldr != null ) ) 
-								hueMaxValLbl.setText( Integer.toString( (int)hueMaxSldr.getValue() ) ); 
-							if ( ( satMinValLbl != null ) && ( satMinSldr != null ) ) 
-								satMinValLbl.setText( Integer.toString( (int)satMinSldr.getValue() ) ); 
-							if ( ( satMaxValLbl != null ) && ( satMaxSldr != null ) ) 
-								satMaxValLbl.setText( Integer.toString( (int)satMaxSldr.getValue() ) ); 
-							if ( ( lumMinValLbl != null ) && ( lumMinSldr != null ) ) 
-								lumMinValLbl.setText( Integer.toString( (int)lumMinSldr.getValue() ) ); 
-							if ( ( lumMaxValLbl != null ) && ( lumMaxSldr != null ) ) 
-								lumMaxValLbl.setText( Integer.toString( (int)lumMaxSldr.getValue() ) ); 
+							if ( ( min1ValLbl != null ) && ( min1Sldr != null ) ) 
+								min1ValLbl.setText( Integer.toString( (int)min1Sldr.getValue() ) ); 
+							if ( ( max1ValLbl != null ) && ( max1Sldr != null ) ) 
+								max1ValLbl.setText( Integer.toString( (int)max1Sldr.getValue() ) ); 
+							if ( ( min3ValLbl != null ) && ( min3Sldr != null ) ) 
+								min3ValLbl.setText( Integer.toString( (int)min3Sldr.getValue() ) ); 
+							if ( ( max3ValLbl != null ) && ( max3Sldr != null ) ) 
+								max3ValLbl.setText( Integer.toString( (int)max3Sldr.getValue() ) ); 
+							if ( ( min2ValLbl != null ) && ( min2Sldr != null ) ) 
+								min2ValLbl.setText( Integer.toString( (int)min2Sldr.getValue() ) ); 
+							if ( ( max2ValLbl != null ) && ( max2Sldr != null ) ) 
+								max2ValLbl.setText( Integer.toString( (int)max2Sldr.getValue() ) ); 
 							
 							if ( configProxy != null )
 							{
-								configProxy.minHueStartVal = hueMinSldr.getValue();
-								configProxy.maxHueStartVal = hueMaxSldr.getValue();
-								configProxy.minSatStartVal = satMinSldr.getValue();
-								configProxy.maxSatStartVal = satMaxSldr.getValue();
-								configProxy.minLumStartVal = lumMinSldr.getValue();
-								configProxy.maxLumStartVal = lumMaxSldr.getValue();
+								configProxy.minHueStartVal = min1Sldr.getValue();
+								configProxy.maxHueStartVal = max1Sldr.getValue();
+								configProxy.minSatStartVal = min3Sldr.getValue();
+								configProxy.maxSatStartVal = max3Sldr.getValue();
+								configProxy.minLumStartVal = min2Sldr.getValue();
+								configProxy.maxLumStartVal = max2Sldr.getValue();
 							}
 						}
 						else
@@ -162,12 +162,12 @@ public class VideoController
 							
 							if ( configProxy != null )
 							{
-								hueMinSldr.setValue( configProxy.minHueStartVal );
-								hueMaxSldr.setValue( configProxy.maxHueStartVal );
-								satMinSldr.setValue( configProxy.minSatStartVal );
-								satMaxSldr.setValue( configProxy.maxSatStartVal );
-								lumMinSldr.setValue( configProxy.minLumStartVal );
-								lumMaxSldr.setValue( configProxy.maxLumStartVal );
+								min1Sldr.setValue( configProxy.minHueStartVal );
+								max1Sldr.setValue( configProxy.maxHueStartVal );
+								min3Sldr.setValue( configProxy.minSatStartVal );
+								max3Sldr.setValue( configProxy.maxSatStartVal );
+								min2Sldr.setValue( configProxy.minLumStartVal );
+								max2Sldr.setValue( configProxy.maxLumStartVal );
 								
 								initialized = true;
 							}
@@ -329,12 +329,12 @@ public class VideoController
 					Mat output = GearLiftTargetTracking.processMat( frame, 
 										capture.get( Videoio.CV_CAP_PROP_FRAME_WIDTH ), 
 										capture.get( Videoio.CV_CAP_PROP_FRAME_HEIGHT ), 
-										hueMinSldr.getValue(),
-										hueMaxSldr.getValue(),
-										satMinSldr.getValue(),
-										satMaxSldr.getValue(),
-										lumMinSldr.getValue(),
-										lumMaxSldr.getValue(),
+										min1Sldr.getValue(),
+										max1Sldr.getValue(),
+										min2Sldr.getValue(),
+										max2Sldr.getValue(),
+										min3Sldr.getValue(),
+										max3Sldr.getValue(),
 										thresholdCheckBox.isSelected() );
 					
 					// convert the Mat object (OpenCV) to Image (JavaFX)
