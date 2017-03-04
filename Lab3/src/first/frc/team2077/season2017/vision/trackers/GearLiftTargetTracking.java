@@ -18,8 +18,8 @@ public class GearLiftTargetTracking
 			double min3, double max3, 
 			boolean returnThresholdMat )
 	{
-		long prevTickCount = Core.getTickCount();
-		double elapsedTime = 0.0;
+		//long prevTickCount = Core.getTickCount();
+		//double elapsedTime = 0.0;
 		
 		Mat thresholdMat = new Mat();
 		
@@ -35,10 +35,10 @@ public class GearLiftTargetTracking
 			targetCandidate.draw( toProcess );
 		}
 
-		elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
-		System.out.print("time: ");
-		System.out.printf("%.5f", elapsedTime);
-		System.out.println(" ms");
+		//elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
+		//System.out.print("time: ");
+		//System.out.printf("%.5f", elapsedTime);
+		//System.out.println(" ms");
 		
 		return ( returnThresholdMat ? thresholdMat : toProcess );
 	}
