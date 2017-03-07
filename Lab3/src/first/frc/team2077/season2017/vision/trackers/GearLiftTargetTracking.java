@@ -33,12 +33,19 @@ public class GearLiftTargetTracking
 		if ( targetCandidate != null )
 		{
 			targetCandidate.draw( toProcess );
+			
+			//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
 		}
 
 		//elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
 		//System.out.print("time: ");
 		//System.out.printf("%.5f", elapsedTime);
 		//System.out.println(" ms");
+		
+		if ( !returnThresholdMat )
+		{
+			thresholdMat.release();
+		}
 		
 		return ( returnThresholdMat ? thresholdMat : toProcess );
 	}

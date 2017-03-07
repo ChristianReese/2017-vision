@@ -7,6 +7,7 @@ public class CollinearLine
 {
 	private LineSegment projectedSegment1; // Pt1 of this segment is Pt1 of this collinear line
 	private LineSegment projectedSegment2; // Pt2 of this segment is Pt2 of this collinear line
+	private LineSegment bridgeLine;
 
 	private double segment1Fraction;
 	private double segment2Fraction;
@@ -54,6 +55,7 @@ public class CollinearLine
 		
 		bridgeLine = new LineSegment( result.projectedSegment1.getPt1(), result.projectedSegment2.getPt2() );
 		
+		result.bridgeLine = bridgeLine;
 		result.totalLength = bridgeLine.calculateLength();
 		
 		return result;
@@ -71,7 +73,8 @@ public class CollinearLine
 
 			this.segment1ParentPolygon = copyFrom.segment1ParentPolygon;
 			this.segment2ParentPolygon = copyFrom.segment2ParentPolygon;
-			
+
+			this.bridgeLine = copyFrom.bridgeLine;
 			this.totalLength = copyFrom.totalLength;
 		}
 	}
@@ -110,7 +113,8 @@ public class CollinearLine
 
 		result.segment1ParentPolygon = this.segment2ParentPolygon;
 		result.segment2ParentPolygon = this.segment1ParentPolygon;
-		
+
+		result.bridgeLine = this.bridgeLine;
 		result.totalLength = this.totalLength;
 		
 		return result;
@@ -159,6 +163,11 @@ public class CollinearLine
 	public double getTotalLength() 
 	{
 		return totalLength;
+	}
+
+	public LineSegment getBridgeLine() 
+	{
+		return bridgeLine;
 	}
 	
 }
