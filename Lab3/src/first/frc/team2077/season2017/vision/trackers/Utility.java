@@ -119,27 +119,6 @@ public class Utility
 		return rgb;
 	}
 	
-	public static double average( double[] vals )
-	{
-		double sum = 0.0;
-		for ( double val : vals )
-		{
-			sum += val;
-		}
-		
-		return ( sum / vals.length );
-	}
-	
-	public static boolean approxCompare( double d1, double d2 )
-	{
-		return ( Math.abs( d1 - d2 ) < 0.01 );
-	}
-	
-	public static int mod(int x, int n)
-	{
-		return (int)mod((double)x, (double)n);
-	}
-	
 	public static double mod(double x, double n)
 	{
 		if ( n == 0 )
@@ -159,77 +138,6 @@ public class Utility
 	public static double dot( double x1, double y1, double x2, double y2 )
 	{
 		return ( ( x1 * x2 ) + ( y1 * y2 ) );
-	}
-	
-	public static double normDot( double x1, double y1, double x2, double y2 )
-	{
-		double vect1Length = Math.sqrt( ( x1 * x1 ) + ( y1 * y1 ) );
-		double vect2Length = Math.sqrt( ( x2 * x2 ) + ( y2 * y2 ) );
-		
-		if ( ( vect1Length < 0.001 ) || ( vect2Length < 0.001 )
-				|| ( vect1Length == Double.NaN ) || ( vect2Length == Double.NaN ) )
-		{
-			return 0.0;
-		}
-
-		double newX1 = x1 / vect1Length;
-		double newY1 = y1 / vect1Length;
-		double newX2 = x2 / vect2Length;
-		double newY2 = y2 / vect2Length;
-		
-		return dot( newX1, newY1, newX2, newY2 );
-	}
-	
-	public static double crossProductMagnitude( double x1, double y1, double x2, double y2 )
-	{
-		return ((x1*y2)-(y1*x2));
-	}
-
-	public static double getTurn( Point pt1, Point pt2, Point pt3 )
-	{
-		return getTurn( pt2.x - pt1.x, pt2.y - pt1.y, pt3.x - pt2.x, pt3.y - pt2.y );
-	}
-	
-	public static double getTurn( double x1, double y1, double x2, double y2 )
-	{
-		return ( 1.0 - normDot( x1, y1, x2, y2 ) );
-	}
-	
-	/**
-	 * The U scalar is a scalar along ls2 that locates the intersect point with ls1.
-	 * Its division components can help to determine collinearity and parallelism.
-	 * @param ls1 First line segment.
-	 * @param ls2 Second line segment.
-	 * @param dividend The dividend in ( U = dividend / divisor ).
-	 * @param divisor The divisor in ( U = dividend / divisor ).
-	 * @return True if dividend and divisor were set. False due to invalid parameters.
-	 */
-	public static boolean getUScalarDivisionComponents( LineSegment ls1, LineSegment ls2, 
-			MutableDouble dividend, MutableDouble divisor )
-	{
-		if ( ( ls1 == null ) || ( ls2 == null )
-				|| ( dividend == null ) || ( divisor == null ) )
-		{
-			return false;
-		}
-		
-		if ( ( ls1.getPt1() == null ) || ( ls1.getPt2() == null )
-				|| ( ls2.getPt1() == null ) || ( ls2.getPt2() == null ) )
-		{
-			return false;
-		}
-		
-		Point p = ls1.getPt1();
-		Point q = ls2.getPt1();
-		Point r = new Point( ls1.getPt2().x - ls1.getPt1().x, ls1.getPt2().y - ls1.getPt1().y );
-		Point s = new Point( ls2.getPt2().x - ls2.getPt1().x, ls2.getPt2().y - ls2.getPt1().y );
-		
-		dividend.setValue( Utility.crossProductMagnitude( 
-				q.x - p.x, q.y - p.y, r.x, r.y ) ); // ( q - p ) x r
-		divisor.setValue( Utility.crossProductMagnitude( 
-				r.x, r.y, s.x, s.y ) ); // r x s
-		
-		return true;
 	}
 	
 	public static double getPointsDistance( Point pt1, Point pt2 )
@@ -287,7 +195,6 @@ public class Utility
 	
 	public static LineSegment projectLineSegmentOnLine( LineSegment toProject, LineSegment toThis )
 	{
-		LineSegment result = null;
 		MutableDouble pt1ProjectValue = new MutableDouble( 0.0 );
 		MutableDouble pt2ProjectValue = new MutableDouble( 0.0 );
 
@@ -302,36 +209,54 @@ public class Utility
 		return new LineSegment( pt2, pt1 );
 	}
 	
-	public static double getLowestAngleBetween( LineSegment lineSegment1, LineSegment lineSegment2 )
+	public static double getLowestAngleBetween( LineSegment lineSegment1, LineSegment lineSegment2, boolean fast )
 	{
-		double angle1 = lineSegment1.calculateAngle();
-		double angle2 = lineSegment2.calculateAngle();
-		
-		double rawDifference = Math.abs( angle1 - angle2 );
-		
-		if ( rawDifference > 270 ) // >270 & <=360
+		if ( ( lineSegment1 == null ) || ( lineSegment2 == null ) )
 		{
-			return 90.0 - ( rawDifference - 270.0 );
-		}
-		else if ( rawDifference > 180 ) // >180 & <=270
-		{
-			return rawDifference - 180.0;
-		}
-		else if ( rawDifference > 90 ) // >90 & <=180
-		{
-			return 90.0 - ( rawDifference - 90.0 );
+			return Double.NaN;
 		}
 		
-		return rawDifference; // 0 .. 90
-	}
-	
-	public static double determinant( Point pt1, Point pt2, Point pt3 )
-	{
-		double result =  pt1.x*pt2.y + pt2.x*pt3.y + pt3.x*pt1.y - pt1.x*pt3.y - pt2.x*pt1.y - pt3.x*pt2.y;
+		double angle1 = lineSegment1.calculateAngle( fast );
+		double angle2 = lineSegment2.calculateAngle( fast );
 		
-		//System.out.println( result );
+		double signedDifference = angle1 - angle2;
+		double absDifference = Math.abs( signedDifference );
 		
-		return result;
+		if ( absDifference > 270 ) // >270 & <=360
+		{
+			if ( signedDifference < 0.0 )
+			{
+				return 90.0 + ( signedDifference + 270.0 );
+			}
+			else
+			{
+				return -90.0 + ( signedDifference - 270.0 );
+			}
+		}
+		else if ( absDifference > 180 ) // >180 & <=270
+		{
+			if ( signedDifference < 0.0 )
+			{
+				return signedDifference + 180.0;
+			}
+			else
+			{
+				return signedDifference - 180.0;
+			}
+		}
+		else if ( absDifference > 90 ) // >90 & <=180
+		{
+			if ( signedDifference < 0.0 )
+			{
+				return 90.0 + ( signedDifference + 90.0 );
+			}
+			else
+			{
+				return -90.0 + ( signedDifference - 90.0 );
+			}
+		}
+		
+		return signedDifference; // 0 .. 90
 	}
 	
     /**
@@ -460,11 +385,6 @@ public class Utility
         return ((a1 > 0.0) ^ (a2 > 0.0)) && ((a3 > 0.0) ^ (a4 > 0.0));
       } 
     }
-
-	public static void drawVertex( Vertex vertex, double[] color, int size, Mat camFrame )
-	{
-		drawPoint( vertex.getPoint(), color, size, camFrame );
-	}
 	
 	public static void drawPoint( Point point, double[] color, int size, Mat camFrame )
 	{

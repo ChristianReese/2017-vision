@@ -19,8 +19,6 @@
          <children>
             <ImageView fx:id="histogram" />
             <Text text="Controls" />
-            <CheckBox fx:id="grayscale" text="Show in gray scale" />
-            <CheckBox fx:id="logoCheckBox" onAction="#loadLogo" text="Show logo" />
             <CheckBox fx:id="thresholdCheckBox" mnemonicParsing="false" text="Show threshold" />
          </children>
       </VBox>

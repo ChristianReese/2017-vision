@@ -8,7 +8,6 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -18,8 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.opencv.core.Core;
 import org.opencv.videoio.VideoCapture;
-
-import it.polito.teaching.cv.VideoController;
 
 /**
  * The main class for a JavaFX application. It creates and handle the main
@@ -40,6 +37,8 @@ public class Video extends Application
 
 	public static class Config implements Serializable
 	{
+		private static final long serialVersionUID = 1946502478445282176L;
+		
 		public Config()
 		{
 			minHueStartVal = new Double(0.0);
@@ -115,8 +114,11 @@ public class Video extends Application
 				
 				if ( configProxy == null )
 				{
+					objIn.close();
 					throw new NullPointerException();
 				}
+				
+				objIn.close();
 			}
 			
 			// load the FXML resource
@@ -152,6 +154,8 @@ public class Video extends Application
 			ObjectOutputStream objOut = new ObjectOutputStream( fileOut );
 			
 			objOut.writeObject(configProxy);
+			
+			objOut.close();
 			
 			System.out.println("Configuration saving successful!");
 		} catch (IOException e) {

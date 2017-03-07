@@ -153,4 +153,10 @@ public class TargetCandidate
 	{
 		return score;
 	}
+	
+	public double calculateAngleDifference()
+	{
+		// Determine highest and lowest
+		return Utility.getLowestAngleBetween( cl1.getBridgeLine(), cl2.getBridgeLine(), false );
+	}
 }

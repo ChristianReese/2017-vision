@@ -18,8 +18,8 @@ public class GearLiftTargetTracking
 			double min3, double max3, 
 			boolean returnThresholdMat )
 	{
-		long prevTickCount = Core.getTickCount();
-		double elapsedTime = 0.0;
+		//long prevTickCount = Core.getTickCount();
+		//double elapsedTime = 0.0;
 		
 		Mat thresholdMat = new Mat();
 		
@@ -33,12 +33,19 @@ public class GearLiftTargetTracking
 		if ( targetCandidate != null )
 		{
 			targetCandidate.draw( toProcess );
+			
+			//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
 		}
 
-		elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
-		System.out.print("time: ");
-		System.out.printf("%.5f", elapsedTime);
-		System.out.println(" ms");
+		//elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
+		//System.out.print("time: ");
+		//System.out.printf("%.5f", elapsedTime);
+		//System.out.println(" ms");
+		
+		if ( !returnThresholdMat )
+		{
+			thresholdMat.release();
+		}
 		
 		return ( returnThresholdMat ? thresholdMat : toProcess );
 	}
@@ -132,7 +139,13 @@ public class GearLiftTargetTracking
 				
 				polygons.add( Polygon.createPolygon( approxCurve.toList() ) );
 			}
+			
+			contour.release();
+			contour2f.release();
+			approxCurve.release();
 		}
+		
+		hierarchy.release();
 		
 		return polygons;
 	}
