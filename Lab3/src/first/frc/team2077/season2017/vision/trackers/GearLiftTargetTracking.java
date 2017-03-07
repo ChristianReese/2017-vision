@@ -6,6 +6,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
@@ -16,7 +17,7 @@ public class GearLiftTargetTracking
 			double min1, double max1, 
 			double min2, double max2, 
 			double min3, double max3, 
-			boolean returnThresholdMat )
+			boolean drawContours )
 	{
 		//long prevTickCount = Core.getTickCount();
 		//double elapsedTime = 0.0;
@@ -25,16 +26,19 @@ public class GearLiftTargetTracking
 		
 		Core.inRange(toProcess, new Scalar(min1, min2, min3), new Scalar(max1, max2, max3), thresholdMat);
 		
-		ArrayList<Polygon> polygons = trackPolygons( toProcess, thresholdMat );	
+		ArrayList<Polygon> polygons = trackPolygons( toProcess, thresholdMat, drawContours );	
 		
-		ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );					
-		TargetCandidate targetCandidate = getTargetCandidate( collinearLines, cameraWidth, cameraHeight );
-		
-		if ( targetCandidate != null )
+		if ( !drawContours )
 		{
-			targetCandidate.draw( toProcess );
+			ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );					
+			TargetCandidate targetCandidate = getTargetCandidate( collinearLines, cameraWidth, cameraHeight );
 			
-			//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
+			if ( targetCandidate != null )
+			{
+				targetCandidate.draw( toProcess );
+				
+				//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
+			}
 		}
 
 		//elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
@@ -42,12 +46,9 @@ public class GearLiftTargetTracking
 		//System.out.printf("%.5f", elapsedTime);
 		//System.out.println(" ms");
 		
-		if ( !returnThresholdMat )
-		{
-			thresholdMat.release();
-		}
+		thresholdMat.release();
 		
-		return ( returnThresholdMat ? thresholdMat : toProcess );
+		return toProcess;
 	}
 	
 	private static ArrayList<CollinearLine> findCollinearLines( ArrayList<Polygon> polygons )
@@ -117,13 +118,15 @@ public class GearLiftTargetTracking
 		}
 	}
 	
-	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask)
+	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask, boolean drawContours)
 	{
 		final double MIN_ARC_LENGTH = 100.0;
 		
 		ArrayList<Polygon> polygons = new ArrayList<>();
 		ArrayList<MatOfPoint> contours = new ArrayList<>();
 		Mat hierarchy = new Mat();
+        Scalar color = new Scalar( Utility.red );
+        int i = 0;
 		
 		Imgproc.findContours(hlsMask, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 		
@@ -135,10 +138,17 @@ public class GearLiftTargetTracking
 			
 			if ( arcLength >= MIN_ARC_LENGTH )
 			{
+				if ( drawContours )
+				{
+					Imgproc.drawContours( camFrame, contours, i, color, 2, 8, hierarchy, 0, new Point() );
+				}
+				
 				Imgproc.approxPolyDP(contour2f, approxCurve, 0.04 * arcLength, true);
 				
 				polygons.add( Polygon.createPolygon( approxCurve.toList() ) );
 			}
+			
+			++i;
 		}
 		
 		return polygons;
