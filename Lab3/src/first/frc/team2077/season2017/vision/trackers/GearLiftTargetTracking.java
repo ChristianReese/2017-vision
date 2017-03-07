@@ -149,7 +149,13 @@ public class GearLiftTargetTracking
 			}
 			
 			++i;
+			
+			contour.release();
+			contour2f.release();
+			approxCurve.release();
 		}
+		
+		hierarchy.release();
 		
 		return polygons;
 	}
