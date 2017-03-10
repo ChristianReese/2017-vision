@@ -8,6 +8,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 public class GearLiftTargetTracking 
@@ -22,16 +23,24 @@ public class GearLiftTargetTracking
 		//long prevTickCount = Core.getTickCount();
 		//double elapsedTime = 0.0;
 		
+		final double CAMERA_DIAGONAL = Math.sqrt( cameraWidth*cameraWidth + cameraHeight*cameraHeight );
+		
 		Mat thresholdMat = new Mat();
+		Mat bridgedThreshold = null;
+		
+		double bridgeValue = CAMERA_DIAGONAL / 80.0;
 		
 		Core.inRange(toProcess, new Scalar(min1, min2, min3), new Scalar(max1, max2, max3), thresholdMat);
+		bridgedThreshold = bridgeOperation( thresholdMat, new Size( bridgeValue, bridgeValue ) );
 		
-		ArrayList<Polygon> polygons = trackPolygons( toProcess, thresholdMat, drawContours );	
+		thresholdMat.release();
+		
+		ArrayList<Polygon> polygons = trackPolygons( toProcess, bridgedThreshold, CAMERA_DIAGONAL, drawContours );	
 		
 		if ( !drawContours )
 		{
 			ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );					
-			TargetCandidate targetCandidate = getTargetCandidate( collinearLines, cameraWidth, cameraHeight );
+			TargetCandidate targetCandidate = getTargetCandidate( collinearLines, CAMERA_DIAGONAL );
 			
 			if ( targetCandidate != null )
 			{
@@ -46,9 +55,30 @@ public class GearLiftTargetTracking
 		//System.out.printf("%.5f", elapsedTime);
 		//System.out.println(" ms");
 		
-		thresholdMat.release();
+		bridgedThreshold.release();
 		
 		return toProcess;
+	}
+	
+	private static Mat bridgeOperation( Mat inThreshold, Size bridgeAmount )
+	{
+		final double ERODE_EXTENSION = 2.0;
+		
+		Size erodeAmount = new Size( bridgeAmount.width + ERODE_EXTENSION, bridgeAmount.height + ERODE_EXTENSION );
+		
+		Mat dilateResult = new Mat();
+		Mat erodeResult = new Mat();
+		Mat dilateKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, bridgeAmount);
+		Mat erodeKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, erodeAmount);
+		
+		Imgproc.dilate( inThreshold, dilateResult, dilateKernel );
+		Imgproc.erode( dilateResult, erodeResult, erodeKernel );
+
+		dilateKernel.release();
+		erodeKernel.release();
+		dilateResult.release();
+		
+		return erodeResult;
 	}
 	
 	private static ArrayList<CollinearLine> findCollinearLines( ArrayList<Polygon> polygons )
@@ -67,7 +97,7 @@ public class GearLiftTargetTracking
 	}
 	
 	private static TargetCandidate getTargetCandidate( ArrayList<CollinearLine> collinearLines,
-			double cameraWidth, double cameraHeight )
+			double cameraDiagonal )
 	{
 		TargetCandidate bestCandidate = null;
 		
@@ -76,8 +106,7 @@ public class GearLiftTargetTracking
 			for ( int j = ( i + 1 ); j < collinearLines.size(); ++j )
 			{
 				TargetCandidate candidate = TargetCandidate.generateTargetCandidate( 
-						collinearLines.get( i ), collinearLines.get( j ),
-						cameraWidth, cameraHeight );
+						collinearLines.get( i ), collinearLines.get( j ), cameraDiagonal );
 				
 				if ( candidate != null )
 				{
@@ -118,9 +147,9 @@ public class GearLiftTargetTracking
 		}
 	}
 	
-	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask, boolean drawContours)
+	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask, double cameraDiagonal, boolean drawContours)
 	{
-		final double MIN_ARC_LENGTH = 100.0;
+		final double MIN_ARC_LENGTH = ( cameraDiagonal / 8.0 );
 		
 		ArrayList<Polygon> polygons = new ArrayList<>();
 		ArrayList<MatOfPoint> contours = new ArrayList<>();

@@ -11,14 +11,12 @@ public class TargetCandidate
 	
 	private double score = 0.0;
 	
-	public static TargetCandidate generateTargetCandidate( CollinearLine cl1, CollinearLine cl2,
-			double cameraWidth, double cameraHeight )
+	public static TargetCandidate generateTargetCandidate( CollinearLine cl1, CollinearLine cl2, double cameraDiagonal )
 	{
-		final double CAMERA_DIAGONAL = Math.sqrt( cameraWidth*cameraWidth + cameraHeight*cameraHeight );
 		final double MIN_TOTAL_SEGMENT_FRACTION = 0.2;
 		final double MAX_TOTAL_SEGMENT_FRACTION = 0.5;
 		final double MAX_TOTAL_SEGMENT_FRACTION_DIFFERENCE = 0.1;
-		final double MIN_SIDE_LENGTH = CAMERA_DIAGONAL / 16.0;//50.0;
+		final double MIN_SIDE_LENGTH = cameraDiagonal / 16.0;//50.0;
 
 		final double CL_LENGTH_DIFFERENCE_SCORE_WEIGHT = 40.0;
 		final double SIDE_LENGTH_DIFFERENCE_SCORE_WEIGHT = 40.0;
