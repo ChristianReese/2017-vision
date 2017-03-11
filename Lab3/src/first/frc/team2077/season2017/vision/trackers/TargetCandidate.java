@@ -1,6 +1,7 @@
 package first.frc.team2077.season2017.vision.trackers;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 
 public class TargetCandidate 
 {
@@ -10,8 +11,14 @@ public class TargetCandidate
 	private CollinearLine cl2 = null;
 	
 	private double score = 0.0;
+
+	private double largestSideLength = -1.0;
+	private double smallestSideLength = -1.0;
 	
-	public static TargetCandidate generateTargetCandidate( CollinearLine cl1, CollinearLine cl2, double cameraDiagonal )
+	private Point centerPoint = null;
+	
+	public static TargetCandidate generateTargetCandidate( CollinearLine cl1, 
+			CollinearLine cl2, double cameraDiagonal, boolean usingHorizontalAxis )
 	{
 		final double MIN_TOTAL_SEGMENT_FRACTION = 0.2;
 		final double MAX_TOTAL_SEGMENT_FRACTION = 0.5;
@@ -29,13 +36,14 @@ public class TargetCandidate
 
 		double smallestCLLength;
 		double largestCLLength;
-		double smallestSideLength;
-		double largestSideLength;
 
 		LineSegment side1;
 		LineSegment side2;
 		double side1Length;
 		double side2Length;
+
+		Point avgCL1Point = null;
+		Point avgCL2Point = null;
 		
 		result.cl1 = new CollinearLine( cl1 );
 		
@@ -101,32 +109,53 @@ public class TargetCandidate
 		
 		if ( side1Length > side2Length )
 		{
-			largestSideLength = side1Length;
-			smallestSideLength = side2Length;
+			result.largestSideLength = side1Length;
+			result.smallestSideLength = side2Length;
 		}
 		else
 		{
-			largestSideLength = side2Length;
-			smallestSideLength = side1Length;
+			result.largestSideLength = side2Length;
+			result.smallestSideLength = side1Length;
 		}
 		
-		if ( Double.isNaN( smallestSideLength ) || Double.isNaN( largestSideLength ) )
+		if ( Double.isNaN( result.smallestSideLength ) || Double.isNaN( result.largestSideLength ) )
 		{
 			return null;
 		}
 		
-		if ( ( smallestSideLength < MIN_SIDE_LENGTH ) || ( smallestCLLength < MIN_SIDE_LENGTH )
-				|| ( largestSideLength < MIN_SIDE_LENGTH ) || ( largestCLLength < MIN_SIDE_LENGTH ) )
+		if ( ( result.smallestSideLength < MIN_SIDE_LENGTH ) || ( smallestCLLength < MIN_SIDE_LENGTH )
+				|| ( result.largestSideLength < MIN_SIDE_LENGTH ) || ( largestCLLength < MIN_SIDE_LENGTH ) )
 		{
 			//System.out.println( smallestSideLength + " " + smallestCLLength );
 			return null;
 		}
 
 		result.score += ( smallestCLLength / largestCLLength ) * CL_LENGTH_DIFFERENCE_SCORE_WEIGHT;
-		result.score += ( smallestSideLength / largestSideLength ) * SIDE_LENGTH_DIFFERENCE_SCORE_WEIGHT;
+		result.score += ( result.smallestSideLength / result.largestSideLength )
+				* SIDE_LENGTH_DIFFERENCE_SCORE_WEIGHT;
 		result.score += ( MAX_TOTAL_SEGMENT_FRACTION_DIFFERENCE
 				- Math.min( totalSegmentFractionDifference, MAX_TOTAL_SEGMENT_FRACTION_DIFFERENCE ) )
 				* ( 1.0 / MAX_TOTAL_SEGMENT_FRACTION_DIFFERENCE ) * SEGMENT_FRACTION_DIFFERENCE_SCORE_WEIGHT;
+		
+		result.centerPoint = new Point( ( side1.getPt1().x + side1.getPt2().x
+							+ side2.getPt1().x + side2.getPt2().x ) / 4.0, 
+				 ( side1.getPt1().y + side1.getPt2().y
+							+ side2.getPt1().y + side2.getPt2().y ) / 4.0);
+
+		avgCL1Point = new Point( ( result.cl1.getPt1().x + result.cl1.getPt4().x ) / 2.0,
+				( result.cl1.getPt1().y + result.cl1.getPt4().y ) / 2.0);
+		avgCL2Point = new Point( ( result.cl2.getPt1().x + result.cl2.getPt4().x ) / 2.0,
+				( result.cl2.getPt1().y + result.cl2.getPt4().y ) / 2.0);
+		
+		// Make collinear line order consistent:
+		if ( ( usingHorizontalAxis && ( avgCL1Point.x > avgCL2Point.x ) )
+				|| ( ( !usingHorizontalAxis ) && ( avgCL1Point.y > avgCL2Point.y ) ))
+		{
+			// Swap CL1 and CL2
+			CollinearLine tmp = result.cl1;
+			result.cl1 = result.cl2;
+			result.cl2 = tmp;
+		}
 		
 		return result;
 	}
@@ -156,5 +185,20 @@ public class TargetCandidate
 	{
 		// Determine highest and lowest
 		return Utility.getLowestAngleBetween( cl1.getBridgeLine(), cl2.getBridgeLine(), false );
+	}
+
+	public double getLargestSideLength() 
+	{
+		return largestSideLength;
+	}
+
+	public double getSmallestSideLength() 
+	{
+		return smallestSideLength;
+	}
+
+	public Point getCenterPoint() 
+	{
+		return centerPoint;
 	}
 }

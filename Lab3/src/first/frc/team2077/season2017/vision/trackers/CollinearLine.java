@@ -81,15 +81,17 @@ public class CollinearLine
 	
 	public void draw( Mat output )
 	{
+		final int PT_SIZE = 5;
+		
 		if ( ( projectedSegment1 != null ) && ( projectedSegment2 != null ) )
 		{
 			LineSegment bridgeLine = new LineSegment( projectedSegment1.getPt1(), projectedSegment2.getPt2() );
 			bridgeLine.draw( output );
 
-			Utility.drawPoint( projectedSegment1.getPt1(), Utility.white, 1, output );
-			Utility.drawPoint( projectedSegment1.getPt2(), Utility.white, 1, output );
-			Utility.drawPoint( projectedSegment2.getPt1(), Utility.white, 1, output );
-			Utility.drawPoint( projectedSegment2.getPt2(), Utility.white, 1, output );
+			Utility.drawPoint( projectedSegment1.getPt1(), Utility.white, PT_SIZE, output );
+			Utility.drawPoint( projectedSegment1.getPt2(), Utility.white, PT_SIZE, output );
+			Utility.drawPoint( projectedSegment2.getPt1(), Utility.white, PT_SIZE, output );
+			Utility.drawPoint( projectedSegment2.getPt2(), Utility.white, PT_SIZE, output );
 		}
 	}
 	

@@ -62,6 +62,8 @@ public class LineSegment
 
 	public void draw( Mat output )
 	{
+		final int LINE_THICKNESS = 5;
+		
 		/*double dx = pt2.x - pt1.x;
 		double dy = pt2.y - pt1.y;
 		
@@ -74,7 +76,7 @@ public class LineSegment
 		
 		double[] rotationColor = Utility.hueToRGB( Utility.fastArcCosine( arcCosInput ) * 2.0 );*/
 		
-		Imgproc.line( output, pt1, pt2, new Scalar( Utility.red ) /*new Scalar( rotationColor )*/ );
+		Imgproc.line( output, pt1, pt2, new Scalar( Utility.red ), LINE_THICKNESS );
 		//Utility.drawPoint( pt1, red, 1, output );
 		//Utility.drawPoint( pt2, blue, 1, output );
 	}
