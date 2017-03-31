@@ -124,6 +124,17 @@ public class LineSegment
 		
 		return new Point();
 	}
+	
+	public Point getPointAlongLine( double lineFraction )
+	{
+		Point toAdd = getNormalVect();
+		double length = calculateLength();
+
+		toAdd.x *= ( lineFraction * length );
+		toAdd.y *= ( lineFraction * length );
+		
+		return new Point( pt1.x + toAdd.x, pt1.y + toAdd.y );
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()

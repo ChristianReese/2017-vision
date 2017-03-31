@@ -37,8 +37,6 @@ public class GearLiftTargetTracking
 	public static final double T2C_MULTIPLIER = 45.0 / 13.25; // actual / calculated
 	public static final double C2T_MULTIPLIER = -1.0;
 	
-	public static final double GEAR_TARGET_HEIGHT_INCHES = 5.0;
-	
 	public static Mat processMat( Mat toProcess, 
 			double cameraWidth, double cameraHeight, 
 			double min1, double max1, 
@@ -64,41 +62,24 @@ public class GearLiftTargetTracking
 			thresholdMat.release();
 		}
 
-		ArrayList<Polygon> polygons = trackPolygons( toProcess, 
-				( USE_BRIDGING ? bridgedThreshold : thresholdMat ), CAMERA_DIAGONAL, drawContours );	
+		TargetCandidate targetCandidate = trackTarget( toProcess, 
+				( USE_BRIDGING ? bridgedThreshold : thresholdMat ), CAMERA_DIAGONAL, drawContours, false );
 		
-		if ( !drawContours )
+		if ( targetCandidate != null )
 		{
-			for ( Polygon poly : polygons )
-			{
-				poly.draw( toProcess );
-			}
+			double targetFwdToCameraAngle = calculateTargetFwdToCameraAngle(targetCandidate);
+			double cameraFwdToTargetAngle = calculateCameraFwdToTargetAngle(targetCandidate,
+					CAMERA_RUNNING_SIDEWAYS ? cameraHeight : cameraWidth, !CAMERA_RUNNING_SIDEWAYS);
+			double cameraToTargetDistance = calculateCameraToTargetDistance(targetCandidate,
+					cameraWidth, cameraHeight, CAMERA_RUNNING_SIDEWAYS != targetCandidate.hasBothRectangles());
 			
-			ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );	
+			targetCandidate.draw( toProcess );
 			
-			for ( CollinearLine collinearLine : collinearLines )
-			{
-				//collinearLine.draw( toProcess );
-			}
+			printTargetFwdToCameraAngle( targetFwdToCameraAngle, toProcess );
+			printCameraFwdToTargetAngle( cameraFwdToTargetAngle, toProcess );
+			printCameraToTargetDistance( cameraToTargetDistance, toProcess );
 			
-			TargetCandidate targetCandidate = getTargetCandidate( collinearLines, CAMERA_DIAGONAL );
-			
-			if ( targetCandidate != null )
-			{
-				double targetFwdToCameraAngle = calculateTargetFwdToCameraAngle(targetCandidate);
-				double cameraFwdToTargetAngle = calculateCameraFwdToTargetAngle(targetCandidate,
-						cameraHeight, !CAMERA_RUNNING_SIDEWAYS, toProcess);
-				double cameraToTargetDistance = calculateCameraToTargetDistance(targetCandidate,
-						cameraWidth, CAMERA_RUNNING_SIDEWAYS);
-				
-				//targetCandidate.draw( toProcess );
-				
-				//printTargetFwdToCameraAngle( targetFwdToCameraAngle, toProcess );
-				//printCameraFwdToTargetAngle( cameraFwdToTargetAngle, toProcess );
-				//printCameraToTargetDistance( cameraToTargetDistance, toProcess );
-				
-				//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
-			}
+			//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
 		}
 
 		//elapsedTime = (double)( Core.getTickCount() - prevTickCount ) * 1000.0 / Core.getTickFrequency();
@@ -129,7 +110,7 @@ public class GearLiftTargetTracking
 	}
 	
 	private static double calculateCameraFwdToTargetAngle(TargetCandidate targetCandidate,
-			double cameraPixelLength, boolean usingHorizontalAxis, Mat toProcess)
+			double cameraPixelLength, boolean usingHorizontalAxis)
 	{
 		if ( ( targetCandidate == null ) || ( cameraPixelLength < 0.1 ) )
 		{
@@ -144,13 +125,15 @@ public class GearLiftTargetTracking
 		
 		double targetCoordFromCenter = targetAxisCoord - ( cameraPixelLength / 2.0 );
 		
-		return ( C2T_MULTIPLIER * targetCoordFromCenter * camFrustumAngle / cameraPixelLength );
+		double signMultiplier = ( usingHorizontalAxis ? -1.0 : 1.0 );
+		
+		return ( C2T_MULTIPLIER * signMultiplier * targetCoordFromCenter * camFrustumAngle / cameraPixelLength );
 	}
 	
 	private static double calculateCameraToTargetDistance(TargetCandidate targetCandidate,
-			double cameraPixelLength, boolean usingHorizontalAxis)
+			double cameraPixelWidth, double cameraPixelHeight, boolean usingHorizontalAxis)
 	{
-		if ( ( targetCandidate == null ) || ( cameraPixelLength < 0.1 ) )
+		if ( ( targetCandidate == null ) || ( cameraPixelWidth < 0.1 ) || ( cameraPixelHeight < 0.1 ) )
 		{
 			return 0.0;
 		}
@@ -166,8 +149,8 @@ public class GearLiftTargetTracking
 			return 0.0;
 		}
 		
-		return ( DISTANCE_MULTIPLIER * GEAR_TARGET_HEIGHT_INCHES * cameraPixelLength
-				/ ( 2.0 * targetHeightAverage * camFrustumAngleTan ) );
+		return ( DISTANCE_MULTIPLIER * ( usingHorizontalAxis ? cameraPixelWidth : cameraPixelHeight )
+				/ ( 2.0 * targetCandidate.getNormalizedScale() * camFrustumAngleTan ) );
 	}
 	
 	/**
@@ -239,6 +222,27 @@ public class GearLiftTargetTracking
 		return result;
 	}
 	
+	private static TargetCandidate evaluateTargetCandidate( TargetCandidate currentCandidate, 
+			TargetCandidate bestCandidate, double minimumScore )
+	{
+		if ( currentCandidate != null )
+		{
+			if ( currentCandidate.getScore() >= minimumScore )
+			{
+				if ( bestCandidate == null )
+				{
+					return currentCandidate;
+				}
+				else if ( bestCandidate.getScore() < currentCandidate.getScore() )
+				{
+					return currentCandidate;
+				}
+			}
+		}
+		
+		return bestCandidate;
+	}
+	
 	private static TargetCandidate getTargetCandidate( ArrayList<CollinearLine> collinearLines,
 			double cameraDiagonal )
 	{
@@ -251,25 +255,7 @@ public class GearLiftTargetTracking
 				TargetCandidate candidate = TargetCandidate.generateTargetCandidate( 
 						collinearLines.get( i ), collinearLines.get( j ), cameraDiagonal, CAMERA_RUNNING_SIDEWAYS );
 				
-				if ( candidate != null )
-				{
-					if ( bestCandidate == null )
-					{
-						bestCandidate = candidate;
-					}
-					else if ( bestCandidate.getScore() < candidate.getScore() )
-					{
-						bestCandidate = candidate;
-					}
-				}
-			}
-		}
-		
-		if ( bestCandidate != null )
-		{
-			if ( bestCandidate.getScore() < TargetCandidate.MIN_SCORE )
-			{
-				return null;
+				bestCandidate = evaluateTargetCandidate( candidate, bestCandidate, TargetCandidate.MIN_SCORE );
 			}
 		}
 		
@@ -301,47 +287,14 @@ public class GearLiftTargetTracking
 		int[] result;
 		int i = 0;
 		
-		/*if ( ( basePoints != null ) && ( overlapPoints != null ) )
-		{
-			int baseIdx = 0;
-			int overlapIdx = 0;
-			
-			for ( Point basePt : basePoints )
-			{
-				if ( basePt.equals( overlapPoints[ (int)Utility.mod( overlapIdx, overlapPoints.length ) ] ) )
-				{
-					indices.add( baseIdx );
-					
-					++overlapIdx;
-				}
-				
-				++baseIdx;
-			}
-		}*/
-		
-		int baseIdx = 0;
-		int baseIndicesChecked = 0;
-		boolean firstOverlapFound = false;
-		
-		//System.out.println("---");
-		
 		for ( Point overlapPoint : overlapPoints )
 		{
 			int bestIndex = -1;
 			double smallestDistance = 0.0;
 			
-			//System.out.print("-");
-			
 			for ( int j = 0; j < basePoints.length; ++j )
 			{
 				double currentDistance = Utility.getPointsDistance(basePoints[ j ], overlapPoint);
-				
-				/*if ( basePoints[ j ].equals( overlapPoint ) )
-				//if ( Utility.getPointsDistance(basePoints[ j ], overlapPoint) < 3.0 )
-				{
-					//System.out.print( " " + j + " " );
-					indices.add( j );
-				}*/
 				
 				if ( ( bestIndex < 0 ) || ( currentDistance < smallestDistance ) )
 				{
@@ -352,31 +305,9 @@ public class GearLiftTargetTracking
 			
 			if ( bestIndex >= 0 )
 			{
-				//System.out.print( " " + bestIndex + " " );
 				indices.add( bestIndex );
 			}
-			
-			/*while ( !basePoints[ baseIdx ].equals( overlapPoint ) && ( baseIndicesChecked < basePoints.length ) )
-			{
-				baseIdx = (int)Utility.mod( baseIdx + 1, basePoints.length );
-				++baseIndicesChecked;
-			}
-			
-			if ( baseIndicesChecked < basePoints.length )
-			{
-				if ( !firstOverlapFound )
-				{
-					baseIndicesChecked = 0;
-					firstOverlapFound = true;
-				}
-				
-				indices.add( baseIdx );
-			}*/
-			
-			//System.out.println("-");
 		}
-		
-		//System.out.println("---");
 		
 		result = new int[indices.size()];
 		
@@ -388,83 +319,156 @@ public class GearLiftTargetTracking
 		return result;
 	}
 	
-	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask, double cameraDiagonal, boolean drawContours)
+	private static TargetCandidate trackTarget(Mat camFrame, Mat hlsMask, double cameraDiagonal, 
+			boolean drawContours, boolean drawPolygons)
 	{
-		final double MIN_ARC_LENGTH = ( cameraDiagonal / 8.0 );
+		TargetCandidate targetCandidate = null;
 
-		ArrayList<Polygon> polygons = new ArrayList<>();		
-		ArrayList<MatOfPoint> contours = new ArrayList<>();
+		ArrayList<Polygon> polygons = new ArrayList<>();	
+		ArrayList<Integer> polyIndices = new ArrayList<>();
+		ArrayList<Double> arcLengths = new ArrayList<>();
 		
-        int contourIndex = 0;
-		
+		ArrayList<Polygon> polygonsToDraw = null;
+
+		ArrayList<MatOfPoint> contours = new ArrayList<>();	
 		Mat hierarchy = new Mat();
 		
 		Imgproc.findContours(hlsMask, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 		
+		targetCandidate = trackFullTarget( camFrame, contours, hierarchy, polygons, polyIndices, arcLengths, 
+				cameraDiagonal / 8.0, cameraDiagonal, drawContours );
+		
+		if ( targetCandidate == null )
+		{
+			if ( drawPolygons )
+			{
+				polygonsToDraw = new ArrayList<>();
+			}
+			
+			targetCandidate = trackRectangleTarget( camFrame, contours, polygons, polyIndices, arcLengths, polygonsToDraw );
+		}
+		else
+		{
+			polygonsToDraw = polygons;
+			
+			for ( MatOfPoint contour : contours )
+			{
+				contour.release();
+			}
+			
+			contours.clear();
+		}
+		
+		hierarchy.release();
+		
+		if ( drawPolygons )
+		{
+			for ( Polygon poly : polygonsToDraw )
+			{
+				poly.draw( camFrame );
+			}
+		}
+		
+		return targetCandidate;
+	}
+	
+	private static TargetCandidate trackFullTarget( Mat camFrame, ArrayList<MatOfPoint> contours, Mat hierarchy, 
+			ArrayList<Polygon> polygons, ArrayList<Integer> polyIndices, ArrayList<Double> arcLengths,
+			double minimumArcLength, double cameraDiagonal, boolean drawContours )
+	{
+        int contourIndex = 0;
+		ArrayList< CollinearLine > collinearLines = null;
+        
 		for ( MatOfPoint contour : contours )
 		{
-			MatOfPoint2f contour2f = new MatOfPoint2f( contour.toArray() );	
-			
+			MatOfPoint2f contour2f = new MatOfPoint2f( contour.toArray() );		
+			MatOfPoint2f approxCurve = new MatOfPoint2f();
 			double arcLength = Imgproc.arcLength(contour2f, true);
 			
-			if ( arcLength >= MIN_ARC_LENGTH )
+			if ( arcLength >= minimumArcLength )
 			{
-				MatOfInt hullIndices = new MatOfInt();
-				MatOfPoint2f approxCurve = new MatOfPoint2f();
-				MatOfPoint overlapPolygon;
-				
-				int[] overlapIndicesArray = null;
-				Point[] basePolygonArray;
-				Point[] overlapPolygonArray;
-				
-				Polygon newPolygon;
-				
 				if ( drawContours )
 				{
-			        Imgproc.drawContours( camFrame, contours, contourIndex, new Scalar( Utility.red ), 2, 8, hierarchy, 0, new Point() );
+					Imgproc.drawContours( camFrame, contours, contourIndex, new Scalar( Utility.red ), 2, 8, hierarchy, 0, new Point() );
 				}
 				
-				Imgproc.approxPolyDP(contour2f, approxCurve, 0.0075 * arcLength, true); // Base	
-				basePolygonArray = approxCurve.toArray();
+				Imgproc.approxPolyDP(contour2f, approxCurve, 0.04 * arcLength, true);
 				
-				Imgproc.approxPolyDP(contour2f, approxCurve, 0.04 * arcLength, true); // Overlap	
-				overlapPolygonArray = approxCurve.toArray();
-				overlapPolygon = new MatOfPoint( overlapPolygonArray );
-				
-				Imgproc.convexHull(overlapPolygon, hullIndices);
-				overlapIndicesArray = findOverlapIndices(basePolygonArray, overlapPolygonArray);
-				
-				/*if ( overlapIndicesArray.length < 4 )
-				{
-					System.out.println("ERROR");
-				}*/
-				
-				newPolygon = Polygon.constructPotentialTargetRectangle( basePolygonArray, overlapPolygonArray, 
-						hullIndices.toArray(), overlapIndicesArray, camFrame );
-				
-				if ( newPolygon != null )
-				{
-					polygons.add( newPolygon );
-				}
-				
-				//polygons.add( new Polygon( basePolygonArray, overlapIndicesArray ) );
-				//polygons.add( new Polygon( overlapPolygonArray ) );
-				//polygons.add( new Polygon( basePolygonArray ) );
-				//polygons.add( new Polygon( overlapPolygonArray, hullIndices.toArray() ) );
-				
-				overlapPolygon.release();
-				approxCurve.release();
-				hullIndices.release();
+				polygons.add( new Polygon( approxCurve.toList() ) );
+				polyIndices.add( contourIndex );
+				arcLengths.add( arcLength );
+			}
+			else
+			{
+				contour.release();
 			}
 			
 			++contourIndex;
 			
 			contour2f.release();
+			approxCurve.release();
 		}
 		
-		hierarchy.release();
+		collinearLines = findCollinearLines( polygons );		
+		return getTargetCandidate( collinearLines, cameraDiagonal );
+	}
+	
+	private static TargetCandidate trackRectangleTarget( Mat camFrame, ArrayList<MatOfPoint> contours, ArrayList<Polygon> polygons, 
+			ArrayList<Integer> polyIndices, ArrayList<Double> arcLengths, ArrayList<Polygon> polygonsToDraw )
+	{
+		TargetCandidate bestTargetCandidate = null;
 		
-		return polygons;
+		for ( int i = 0; ( i < polygons.size() ) && ( i < polyIndices.size() ) && ( i < arcLengths.size() ); ++i )
+		{
+			MatOfPoint contour = contours.get(polyIndices.get(i));
+			MatOfPoint2f contour2f = new MatOfPoint2f( contour.toArray() );
+			
+			MatOfInt hullIndices = new MatOfInt();
+			MatOfPoint2f approxCurve = new MatOfPoint2f();
+			MatOfPoint overlapPolygon;
+			
+			int[] overlapIndicesArray = null;
+			Point[] basePolygonArray;
+			Point[] overlapPolygonArray;
+			
+			Polygon newPolygon;
+			
+			Imgproc.approxPolyDP(contour2f, approxCurve, 0.01/*0.00875/*0.0075*/ * arcLengths.get(i), true); // Base	
+			basePolygonArray = approxCurve.toArray();
+			
+			overlapPolygonArray = polygons.get(i).toPointsArray();
+			overlapPolygon = new MatOfPoint( overlapPolygonArray );
+			
+			Imgproc.convexHull(overlapPolygon, hullIndices);
+			overlapIndicesArray = findOverlapIndices(basePolygonArray, overlapPolygonArray);
+			
+			if ( overlapIndicesArray.length >= 4 )
+			{
+				newPolygon = Polygon.constructPotentialTargetRectangle( basePolygonArray, overlapPolygonArray, 
+						hullIndices.toArray(), overlapIndicesArray, camFrame );
+				
+				if ( newPolygon != null )
+				{
+					TargetCandidate currentCandidate = TargetCandidate.generateTargetCandidate( 
+							newPolygon, CAMERA_RUNNING_SIDEWAYS );
+					
+					bestTargetCandidate = evaluateTargetCandidate( currentCandidate, bestTargetCandidate, TargetCandidate.MIN_SCORE );
+					
+					if ( polygonsToDraw != null )
+					{
+						polygonsToDraw.add( newPolygon );
+					}
+				}
+			}
+			
+			overlapPolygon.release();
+			approxCurve.release();
+			hullIndices.release();			
+			contour2f.release();
+			contour.release();
+		}
+		
+		return bestTargetCandidate;
 	}
 
 }

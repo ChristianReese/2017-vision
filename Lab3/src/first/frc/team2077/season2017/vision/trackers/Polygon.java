@@ -12,6 +12,11 @@ import org.opencv.core.Point;
 
 public class Polygon implements Iterable< LineSegment >
 {
+	// Target dimension ratio: 5" / 2" = 2.5
+	public static final double PERFECT_TARGET_RECTANGLE_SIDE_RATIO = 2.5; 
+	public static final double MIN_TARGET_RECTANGLE_SIDE_RATIO = 1.5; 
+	public static final double MAX_TARGET_RECTANGLE_SIDE_RATIO = 5.5;
+	
 	private static class PolygonLineSegmentIterator implements Iterator< LineSegment >
 	{
 		Iterator< Point > pointsIter = null;
@@ -187,6 +192,16 @@ public class Polygon implements Iterable< LineSegment >
 		return result;
 	}
 	
+	public Point[] toPointsArray()
+	{
+		return points.toArray(new Point[0]);
+	}
+	
+	public List<Point> getPoints()
+	{
+		return points;
+	}
+	
 	/**
 	 * @param lsIndex Index of the line segment of the hull being evaluated
 	 * @param hullIndices Indices of the hull on the polygon
@@ -214,10 +229,6 @@ public class Polygon implements Iterable< LineSegment >
 		final double MAX_INTERPOLE_DIFFERENCE_TOLERANCE = 0.1;//0.5;
 		
 		final double MAX_LENGTH_DIFFERENCE = 10.0;//5.0; // pixels
-		
-		// Target dimension ratio: 5" / 2" = 2.5
-		final double MIN_SIDE_RATIO = 1.0;//1.5; 
-		final double MAX_SIDE_RATIO = 5.5;
 		
 		class LSPair
 		{
@@ -269,7 +280,7 @@ public class Polygon implements Iterable< LineSegment >
 								if ( interpoleDistanceScaled < MAX_INTERPOLE_DIFFERENCE_TOLERANCE )
 								{
 									double sideRatio = ( interPole1Length + interPole2Length ) / ( ls1Length + ls2Length );
-									if ( ( sideRatio >= MIN_SIDE_RATIO ) && ( sideRatio <= MAX_SIDE_RATIO ) )
+									if ( ( sideRatio >= MIN_TARGET_RECTANGLE_SIDE_RATIO ) && ( sideRatio <= MAX_TARGET_RECTANGLE_SIDE_RATIO ) )
 									{
 										//System.out.println(sideRatio);
 										LSPair lsPair = new LSPair();
@@ -347,8 +358,6 @@ public class Polygon implements Iterable< LineSegment >
 			
 		//bridge.draw(3, drawOutput, Utility.yellow);
 		
-		//System.out.println( min + " " + (min+pointsInRange) );
-		
 		if ( longest != null )
 		{
 			if ( ( longestLength / bridge.calculateLength() ) >= MIN_LENGTH_FRACTION )
@@ -357,6 +366,6 @@ public class Polygon implements Iterable< LineSegment >
 			}
 		}
 		
-		return null;//bridge;
+		return null;
 	}
 }

@@ -140,10 +140,20 @@ public class Utility
 		return ( ( x1 * x2 ) + ( y1 * y2 ) );
 	}
 	
+	public static double dot( Point pt1, Point pt2 )
+	{
+		return ( ( pt1.x * pt2.x ) + ( pt1.y * pt2.y ) );
+	}
+	
 	public static double getPointsDistance( Point pt1, Point pt2 )
 	{
 		double dx = pt2.x - pt1.x;
 		double dy = pt2.y - pt1.y;
+		
+		if ( ( dx == 0.0 ) && ( dy == 0.0 ) )
+		{
+			return 0.0;
+		}
 		
 		return Math.sqrt( dx*dx + dy*dy );
 	}

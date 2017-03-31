@@ -17,6 +17,44 @@ public class CollinearLine
 	
 	private double totalLength;
 	
+	public static void correctIntersectingCLPair( CollinearLine cl1, CollinearLine cl2 )
+	{
+    	Point pt1 = cl1.projectedSegment1.getPt1();
+    	Point pt2 = cl1.projectedSegment2.getPt2();
+    	Point pt3 = cl2.projectedSegment1.getPt1();
+    	Point pt4 = cl2.projectedSegment2.getPt2();
+    	
+    	if ( Utility.linesIntersect( pt1.x, pt1.y, pt2.x, pt2.y, pt3.x, pt3.y, pt4.x, pt4.y ) )
+    	{
+    		cl1.reMapToLine( new LineSegment( pt1, pt4 ) );
+    		cl2.reMapToLine( new LineSegment( pt3, pt2 ) );
+    	}
+	}
+	
+	public static CollinearLine createCollinearLine( LineSegment segment, Polygon parent )
+	{
+		if ( segment == null )
+		{
+			return null;
+		}
+		
+		CollinearLine result = new CollinearLine( null );		
+
+		result.projectedSegment1 = new LineSegment( segment.getPt1(), segment.getPt1() );
+		result.bridgeLine = new LineSegment( segment.getPt1(), segment.getPt2() );
+		result.projectedSegment2 = new LineSegment( segment.getPt2(), segment.getPt2() );
+
+		result.segment1Fraction = 0.0;
+		result.segment2Fraction = 0.0;
+
+		result.segment1ParentPolygon = parent;
+		result.segment2ParentPolygon = parent;
+		
+		result.totalLength = segment.calculateLength();
+		
+		return result;
+	}
+	
 	public static CollinearLine createCollinearLine( LineSegment segment1, LineSegment segment2,
 			Polygon segment1ParentPolygon, Polygon segment2ParentPolygon )
 	{
@@ -120,6 +158,15 @@ public class CollinearLine
 		result.totalLength = this.totalLength;
 		
 		return result;
+	}
+	
+	public void reMapToLine( LineSegment mapTo )
+	{
+		bridgeLine = new LineSegment( mapTo.getPointAlongLine( segment1Fraction ), 
+				mapTo.getPointAlongLine( 1.0 - segment2Fraction ) );
+
+		projectedSegment1 = new LineSegment( mapTo.getPt1(), bridgeLine.getPt1() );
+		projectedSegment2 = new LineSegment( bridgeLine.getPt2(), mapTo.getPt2() );
 	}
 	
 	public Point getPt1()
