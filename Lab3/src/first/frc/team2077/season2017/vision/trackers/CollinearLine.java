@@ -86,7 +86,7 @@ public class CollinearLine
 		if ( ( projectedSegment1 != null ) && ( projectedSegment2 != null ) )
 		{
 			LineSegment bridgeLine = new LineSegment( projectedSegment1.getPt1(), projectedSegment2.getPt2() );
-			bridgeLine.draw( output );
+			bridgeLine.draw( 5, output );
 
 			Utility.drawPoint( projectedSegment1.getPt1(), Utility.white, PT_SIZE, output );
 			Utility.drawPoint( projectedSegment1.getPt2(), Utility.white, PT_SIZE, output );

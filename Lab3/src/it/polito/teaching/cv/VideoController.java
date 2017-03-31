@@ -175,7 +175,8 @@ public class VideoController
 			
 			// start the video capture
 			this.capture.open( cameraIndex );
-			capture.set(Videoio.CAP_PROP_EXPOSURE , -8 );
+			capture.set(Videoio.CAP_PROP_EXPOSURE , -7 );
+			//capture.set(Videoio.CV_CAP_PROP_SETTINGS , 1 );
 			
 			// is the video stream available?
 			if (this.capture.isOpened())
@@ -258,6 +259,7 @@ public class VideoController
 			{
 				// read the current frame
 				this.capture.read(frame);
+				//frame = Imgcodecs.imread("resources/img.png");
 				
 				// if the frame is not empty, process it
 				if (!frame.empty())

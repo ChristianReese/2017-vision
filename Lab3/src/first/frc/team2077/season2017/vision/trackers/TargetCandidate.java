@@ -23,7 +23,7 @@ public class TargetCandidate
 		final double MIN_TOTAL_SEGMENT_FRACTION = 0.2;
 		final double MAX_TOTAL_SEGMENT_FRACTION = 0.5;
 		final double MAX_TOTAL_SEGMENT_FRACTION_DIFFERENCE = 0.1;
-		final double MIN_SIDE_LENGTH = cameraDiagonal / 16.0;//50.0;
+		final double MIN_SIDE_LENGTH = cameraDiagonal / 23.2;//16.0;//50.0;
 
 		final double CL_LENGTH_DIFFERENCE_SCORE_WEIGHT = 40.0;
 		final double SIDE_LENGTH_DIFFERENCE_SCORE_WEIGHT = 40.0;
@@ -126,7 +126,7 @@ public class TargetCandidate
 		if ( ( result.smallestSideLength < MIN_SIDE_LENGTH ) || ( smallestCLLength < MIN_SIDE_LENGTH )
 				|| ( result.largestSideLength < MIN_SIDE_LENGTH ) || ( largestCLLength < MIN_SIDE_LENGTH ) )
 		{
-			//System.out.println( smallestSideLength + " " + smallestCLLength );
+			//System.out.println( result.smallestSideLength + " or " + smallestCLLength + " < " + MIN_SIDE_LENGTH );
 			return null;
 		}
 
@@ -167,13 +167,15 @@ public class TargetCandidate
 		LineSegment bridgeSegment3 = new LineSegment( cl1.getPt3(), cl2.getPt3() );
 		LineSegment bridgeSegment4 = new LineSegment( cl1.getPt4(), cl2.getPt4() );
 
-		bridgeSegment1.draw( output );
-		bridgeSegment2.draw( output );
-		bridgeSegment3.draw( output );
-		bridgeSegment4.draw( output );
+		bridgeSegment1.draw( 5, output );
+		bridgeSegment2.draw( 5, output );
+		bridgeSegment3.draw( 5, output );
+		bridgeSegment4.draw( 5, output );
 
 		cl1.draw( output );
 		cl2.draw( output );
+		
+		Utility.drawPoint( getCenterPoint(), Utility.white, 5, output );
 	}
 	
 	public double getScore()

@@ -2,9 +2,11 @@ package first.frc.team2077.season2017.vision.trackers;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -61,12 +63,24 @@ public class GearLiftTargetTracking
 			bridgedThreshold = bridgeOperation( thresholdMat, new Size( bridgeValue, bridgeValue ) );
 			thresholdMat.release();
 		}
-		
-		ArrayList<Polygon> polygons = trackPolygons( toProcess, ( USE_BRIDGING ? bridgedThreshold : thresholdMat ), CAMERA_DIAGONAL, drawContours );	
+
+		ArrayList<Polygon> polygons = trackPolygons( toProcess, 
+				( USE_BRIDGING ? bridgedThreshold : thresholdMat ), CAMERA_DIAGONAL, drawContours );	
 		
 		if ( !drawContours )
 		{
-			ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );					
+			for ( Polygon poly : polygons )
+			{
+				poly.draw( toProcess );
+			}
+			
+			ArrayList< CollinearLine > collinearLines = findCollinearLines( polygons );	
+			
+			for ( CollinearLine collinearLine : collinearLines )
+			{
+				//collinearLine.draw( toProcess );
+			}
+			
 			TargetCandidate targetCandidate = getTargetCandidate( collinearLines, CAMERA_DIAGONAL );
 			
 			if ( targetCandidate != null )
@@ -77,11 +91,11 @@ public class GearLiftTargetTracking
 				double cameraToTargetDistance = calculateCameraToTargetDistance(targetCandidate,
 						cameraWidth, CAMERA_RUNNING_SIDEWAYS);
 				
-				targetCandidate.draw( toProcess );
+				//targetCandidate.draw( toProcess );
 				
-				printTargetFwdToCameraAngle( targetFwdToCameraAngle, toProcess );
-				printCameraFwdToTargetAngle( cameraFwdToTargetAngle, toProcess );
-				printCameraToTargetDistance( cameraToTargetDistance, toProcess );
+				//printTargetFwdToCameraAngle( targetFwdToCameraAngle, toProcess );
+				//printCameraFwdToTargetAngle( cameraFwdToTargetAngle, toProcess );
+				//printCameraToTargetDistance( cameraToTargetDistance, toProcess );
 				
 				//System.out.println( "Angle difference: " + targetCandidate.calculateAngleDifference() + " degrees" );
 			}
@@ -129,8 +143,6 @@ public class GearLiftTargetTracking
 				: targetCandidate.getCenterPoint().y;
 		
 		double targetCoordFromCenter = targetAxisCoord - ( cameraPixelLength / 2.0 );
-		
-		Utility.drawPoint(targetCandidate.getCenterPoint(), Utility.white, 5, toProcess);
 		
 		return ( C2T_MULTIPLIER * targetCoordFromCenter * camFrustumAngle / cameraPixelLength );
 	}
@@ -278,41 +290,176 @@ public class GearLiftTargetTracking
 		}
 	}
 	
+	/**
+	 * @param basePoints Base polygon approximation (lower epsilon value, higher precision/detail)
+	 * @param overlapPoints Simplified, overlapping polygon approximation (higher epsilon value, lower precision/detail)
+	 * @param indices Output list of indices to overlapping points in the base polygon.
+	 */
+	private static int[] findOverlapIndices( Point[] basePoints, Point[] overlapPoints )
+	{
+		List<Integer> indices = new ArrayList<>();
+		int[] result;
+		int i = 0;
+		
+		/*if ( ( basePoints != null ) && ( overlapPoints != null ) )
+		{
+			int baseIdx = 0;
+			int overlapIdx = 0;
+			
+			for ( Point basePt : basePoints )
+			{
+				if ( basePt.equals( overlapPoints[ (int)Utility.mod( overlapIdx, overlapPoints.length ) ] ) )
+				{
+					indices.add( baseIdx );
+					
+					++overlapIdx;
+				}
+				
+				++baseIdx;
+			}
+		}*/
+		
+		int baseIdx = 0;
+		int baseIndicesChecked = 0;
+		boolean firstOverlapFound = false;
+		
+		//System.out.println("---");
+		
+		for ( Point overlapPoint : overlapPoints )
+		{
+			int bestIndex = -1;
+			double smallestDistance = 0.0;
+			
+			//System.out.print("-");
+			
+			for ( int j = 0; j < basePoints.length; ++j )
+			{
+				double currentDistance = Utility.getPointsDistance(basePoints[ j ], overlapPoint);
+				
+				/*if ( basePoints[ j ].equals( overlapPoint ) )
+				//if ( Utility.getPointsDistance(basePoints[ j ], overlapPoint) < 3.0 )
+				{
+					//System.out.print( " " + j + " " );
+					indices.add( j );
+				}*/
+				
+				if ( ( bestIndex < 0 ) || ( currentDistance < smallestDistance ) )
+				{
+					bestIndex = j;
+					smallestDistance = currentDistance;
+				}
+			}
+			
+			if ( bestIndex >= 0 )
+			{
+				//System.out.print( " " + bestIndex + " " );
+				indices.add( bestIndex );
+			}
+			
+			/*while ( !basePoints[ baseIdx ].equals( overlapPoint ) && ( baseIndicesChecked < basePoints.length ) )
+			{
+				baseIdx = (int)Utility.mod( baseIdx + 1, basePoints.length );
+				++baseIndicesChecked;
+			}
+			
+			if ( baseIndicesChecked < basePoints.length )
+			{
+				if ( !firstOverlapFound )
+				{
+					baseIndicesChecked = 0;
+					firstOverlapFound = true;
+				}
+				
+				indices.add( baseIdx );
+			}*/
+			
+			//System.out.println("-");
+		}
+		
+		//System.out.println("---");
+		
+		result = new int[indices.size()];
+		
+		for ( Integer idx : indices )
+		{
+			result[i++] = idx;
+		}
+		
+		return result;
+	}
+	
 	private static ArrayList<Polygon> trackPolygons(Mat camFrame, Mat hlsMask, double cameraDiagonal, boolean drawContours)
 	{
 		final double MIN_ARC_LENGTH = ( cameraDiagonal / 8.0 );
-		
-		ArrayList<Polygon> polygons = new ArrayList<>();
+
+		ArrayList<Polygon> polygons = new ArrayList<>();		
 		ArrayList<MatOfPoint> contours = new ArrayList<>();
+		
+        int contourIndex = 0;
+		
 		Mat hierarchy = new Mat();
-        Scalar color = new Scalar( Utility.red );
-        int i = 0;
 		
 		Imgproc.findContours(hlsMask, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 		
 		for ( MatOfPoint contour : contours )
 		{
-			MatOfPoint2f contour2f = new MatOfPoint2f( contour.toArray() );		
-			MatOfPoint2f approxCurve = new MatOfPoint2f();
+			MatOfPoint2f contour2f = new MatOfPoint2f( contour.toArray() );	
+			
 			double arcLength = Imgproc.arcLength(contour2f, true);
 			
 			if ( arcLength >= MIN_ARC_LENGTH )
 			{
+				MatOfInt hullIndices = new MatOfInt();
+				MatOfPoint2f approxCurve = new MatOfPoint2f();
+				MatOfPoint overlapPolygon;
+				
+				int[] overlapIndicesArray = null;
+				Point[] basePolygonArray;
+				Point[] overlapPolygonArray;
+				
+				Polygon newPolygon;
+				
 				if ( drawContours )
 				{
-					Imgproc.drawContours( camFrame, contours, i, color, 2, 8, hierarchy, 0, new Point() );
+			        Imgproc.drawContours( camFrame, contours, contourIndex, new Scalar( Utility.red ), 2, 8, hierarchy, 0, new Point() );
 				}
 				
-				Imgproc.approxPolyDP(contour2f, approxCurve, 0.04 * arcLength, true);
+				Imgproc.approxPolyDP(contour2f, approxCurve, 0.0075 * arcLength, true); // Base	
+				basePolygonArray = approxCurve.toArray();
 				
-				polygons.add( Polygon.createPolygon( approxCurve.toList() ) );
+				Imgproc.approxPolyDP(contour2f, approxCurve, 0.04 * arcLength, true); // Overlap	
+				overlapPolygonArray = approxCurve.toArray();
+				overlapPolygon = new MatOfPoint( overlapPolygonArray );
+				
+				Imgproc.convexHull(overlapPolygon, hullIndices);
+				overlapIndicesArray = findOverlapIndices(basePolygonArray, overlapPolygonArray);
+				
+				/*if ( overlapIndicesArray.length < 4 )
+				{
+					System.out.println("ERROR");
+				}*/
+				
+				newPolygon = Polygon.constructPotentialTargetRectangle( basePolygonArray, overlapPolygonArray, 
+						hullIndices.toArray(), overlapIndicesArray, camFrame );
+				
+				if ( newPolygon != null )
+				{
+					polygons.add( newPolygon );
+				}
+				
+				//polygons.add( new Polygon( basePolygonArray, overlapIndicesArray ) );
+				//polygons.add( new Polygon( overlapPolygonArray ) );
+				//polygons.add( new Polygon( basePolygonArray ) );
+				//polygons.add( new Polygon( overlapPolygonArray, hullIndices.toArray() ) );
+				
+				overlapPolygon.release();
+				approxCurve.release();
+				hullIndices.release();
 			}
 			
-			++i;
+			++contourIndex;
 			
-			contour.release();
 			contour2f.release();
-			approxCurve.release();
 		}
 		
 		hierarchy.release();

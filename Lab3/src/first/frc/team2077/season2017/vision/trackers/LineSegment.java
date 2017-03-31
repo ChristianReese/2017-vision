@@ -60,25 +60,14 @@ public class LineSegment
 		}
 	}
 
-	public void draw( Mat output )
+	public void draw( int thickness, Mat output, double[] color )
 	{
-		final int LINE_THICKNESS = 5;
-		
-		/*double dx = pt2.x - pt1.x;
-		double dy = pt2.y - pt1.y;
-		
-		double arcCosInput = dx / calculateLength();
-		
-		if ( dy < 0.0 )
-		{
-			arcCosInput *= -1.0;
-		}
-		
-		double[] rotationColor = Utility.hueToRGB( Utility.fastArcCosine( arcCosInput ) * 2.0 );*/
-		
-		Imgproc.line( output, pt1, pt2, new Scalar( Utility.red ), LINE_THICKNESS );
-		//Utility.drawPoint( pt1, red, 1, output );
-		//Utility.drawPoint( pt2, blue, 1, output );
+		Imgproc.line( output, pt1, pt2, new Scalar( color ), thickness );
+	}
+
+	public void draw( int thickness, Mat output )
+	{
+		draw( thickness, output, Utility.red );
 	}
 	
 	public double calculateLength()
@@ -134,6 +123,43 @@ public class LineSegment
 		}
 		
 		return new Point();
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((pt1 == null) ? 0 : pt1.hashCode());
+		result = prime * result + ((pt2 == null) ? 0 : pt2.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LineSegment other = (LineSegment) obj;
+		if (pt1 == null) {
+			if (other.pt1 != null)
+				return false;
+		} else if (!pt1.equals(other.pt1))
+			return false;
+		if (pt2 == null) {
+			if (other.pt2 != null)
+				return false;
+		} else if (!pt2.equals(other.pt2))
+			return false;
+		return true;
 	}
 	
 }

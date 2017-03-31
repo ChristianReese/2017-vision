@@ -385,6 +385,23 @@ public class Utility
         return ((a1 > 0.0) ^ (a2 > 0.0)) && ((a3 > 0.0) ^ (a4 > 0.0));
       } 
     }
+    
+    /**
+     * If ls1 and ls2 intersect, pt2 (their second points) will be swapped between them.
+     */
+    public static void correctIntersectingLSPair( LineSegment ls1, LineSegment ls2 )
+    {
+    	Point pt1 = ls1.getPt1();
+    	Point pt2 = ls1.getPt2();
+    	Point pt3 = ls2.getPt1();
+    	Point pt4 = ls2.getPt2();
+    	
+    	if ( linesIntersect( pt1.x, pt1.y, pt2.x, pt2.y, pt3.x, pt3.y, pt4.x, pt4.y ) )
+    	{
+    		ls1.set( pt1, pt4 );
+    		ls2.set( pt3, pt2 );
+    	}
+    }
 	
 	public static void drawPoint( Point point, double[] color, int size, Mat camFrame )
 	{
